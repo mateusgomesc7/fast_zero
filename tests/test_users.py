@@ -22,10 +22,12 @@ def test_create_user(client, user):
 
 
 def test_create_user_with_username_registered(client, user):
+    user_schema = UserPublic.model_validate(user).model_dump()
+
     response = client.post(
         '/users/',
         json={
-            'username': 'Teste',
+            'username': user_schema['username'],
             'email': 'user@email.com',
             'password': 'password',
         },
@@ -36,11 +38,13 @@ def test_create_user_with_username_registered(client, user):
 
 
 def test_create_user_with_email_registered(client, user):
+    user_schema = UserPublic.model_validate(user).model_dump()
+
     response = client.post(
         '/users/',
         json={
             'username': 'user',
-            'email': 'teste@test.com',
+            'email': user_schema['email'],
             'password': 'password',
         },
     )
@@ -65,13 +69,14 @@ def test_read_users_with_user(client, user):
 
 
 def test_read_user_by_id(client, user):
+    user_schema = UserPublic.model_validate(user).model_dump()
     response = client.get('/users/1')
 
     assert response.status_code == HTTPStatus.OK
     assert response.json() == {
         'id': 1,
-        'username': 'Teste',
-        'email': 'teste@test.com',
+        'username': user_schema['username'],
+        'email': user_schema['email'],
     }
 
 
@@ -101,9 +106,9 @@ def test_update_user(client, user, token):
     }
 
 
-def test_update_user_not_permissions(client, user, token):
+def test_update_user_not_permissions(client, other_user, token):
     response = client.put(
-        f'/users/{user.id + 1}',
+        f'/users/{other_user.id}',
         headers={'Authorization': f'Bearer {token}'},
         json={
             'username': 'user_updated',
@@ -126,9 +131,9 @@ def test_delete_user(client, user, token):
     assert response.json() == {'message': 'User deleted'}
 
 
-def test_delete_user_not_permissions(client, user, token):
+def test_delete_user_not_permissions(client, other_user, token):
     response = client.delete(
-        f'/users/{user.id + 1}',
+        f'/users/{other_user.id}',
         headers={'Authorization': f'Bearer {token}'},
     )
 
